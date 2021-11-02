@@ -23,12 +23,11 @@ const guildId = process.env.guildId as string;
 // Create bot client
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 
-// Wait for client to be ready
-client.once('ready', () => console.log("Bot is ready!"));
+let lastSentTime = 0;
 
-// Run this when bot is live and added to a server to automatically add commands
-client.on("guildCreate", () => {
-  console.log("Bot has joined a new server!");
+// Wait for client to be ready
+client.once('ready', () => {
+  console.log("Bot is ready! Creating commands...");
   
   // Create list of commands that we want to be able to use
   const commands = [
@@ -38,20 +37,29 @@ client.on("guildCreate", () => {
   // Create REST object
   const rest = new REST({ version: '9' }).setToken(token);
 
-  // Submit slash commands
+  // Submit global slash commands
   rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commands })
-  .then(() => console.log("Successfully registered commands in server"))
+  .then(() => console.log("Successfully registered guild commands"))
   .catch(console.error);
 });
 
 // Run this when someone interacts with the bot
 client.on('interactionCreate', async (interaction) => {
   // Verify that this is a command
-  if (!interaction.isCommand()) return;
+  if (!interaction || !interaction.isCommand()) return;
 
   // Extract command name and verify that it equals 'clear'
   const commandName = interaction.commandName;
   if (commandName === "clear" ) {
+    const currentSentTime = Math.round(Date.now() / 1000);
+
+    if (currentSentTime - lastSentTime < 8) {
+      await interaction.reply("Clear! Clear! Clear! Clear!");
+      return;
+    }
+    
+    lastSentTime = currentSentTime;
+
     // Create db client
     const client = new DynamoDBClient({ region: "us-east-2" });
     
@@ -82,4 +90,5 @@ client.on('interactionCreate', async (interaction) => {
   }
 });
 
+// Log in using token
 client.login(token);
