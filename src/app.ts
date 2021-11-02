@@ -5,16 +5,15 @@ import { Routes } from 'discord-api-types/v9';
 
 import { DynamoDBClient, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 
-
 import * as dotenv from "dotenv";
 
-// Read in configuration from .env file
+// Read in configuration from .env file (if there)
 dotenv.config();
 
 // Verify that environment variables exist
-if (!("token" in process.env)) throw new Error("\"token\" not found in .env file");
-if (!("clientId" in process.env)) throw new Error("\"clientId\" not found in .env file");
-if (!("guildId" in process.env)) throw new Error("\"guildId\" not found in .env file");
+if (!("token" in process.env)) throw new Error("\"token\" not found in environment variables");
+if (!("clientId" in process.env)) throw new Error("\"clientId\" not found in environment variables");
+if (!("guildId" in process.env)) throw new Error("\"guildId\" not found in environment variables");
 
 const token = process.env.token as string;
 const clientId = process.env.clientId as string;
@@ -75,8 +74,6 @@ client.on('interactionCreate', async (interaction) => {
       ExpressionAttributeValues: { ":one": { N: "1" } },
       ReturnValues: "UPDATED_NEW"
     });
-    
-    let count;
 
     const response = client.send(dbUpdateCommand);
     await response.then(async (value) => {
